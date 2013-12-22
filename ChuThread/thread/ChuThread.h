@@ -37,18 +37,18 @@ namespace chuThreadNamespace
 
 	public:
 		ChuThread();		
-		void startThread();	
-		virtual void thread();									// This function need to be override by inheriting class
+		void startThread();										/// Create a new thread to run the thread funciton
+		virtual void thread();									/// This function need to be override by inheriting class
 
-		void setLocalVariable(T1 arg){localVariable = arg;};	// Set local variable in template T1
-		const T1 getLocalVariable(){return localVariable;}		// Get local variable in template T1
+		void setLocalVariable(T1 arg){localVariable = arg;};	/// Set local variable in template T1
+		const T1 getLocalVariable(){return localVariable;}		/// Get local variable in template T1
 		
-		void setShareVariable(T2 arg);							// Set global variable in template T2
-		const T2 getShareVariable();							// Get local variable in template T2
+		void setShareVariable(T2 arg);							/// Set global variable in template T2
+		const T2 getShareVariable();							/// Get local variable in template T2
 
-		void setInterruptFlag(){interruptFlag = 1;};			// Let thread can be interrup by other threads
+		void setInterruptFlag(){interruptFlag = 1;};			/// Let thread can be interrup by other threads
 
-		bool stopCurrentThread(); 
+		bool stopThread();										/// Stop and close the new thread running the thread funciton
 
 	private:
 
@@ -167,7 +167,7 @@ namespace chuThreadNamespace
 	* Function Purpose:	Create an other thread to execute openThread function by WIN_API
 	*/
 	template<class  T1, class T2>
-	bool ChuThread<T1, T2>::stopCurrentThread()	//argTempl1
+	bool ChuThread<T1, T2>::stopThread()	//argTempl1
 	{
 		bool retVal;
 		if(TerminateThread(localhotHANDLE, 0))

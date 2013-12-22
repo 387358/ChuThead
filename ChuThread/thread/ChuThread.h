@@ -16,6 +16,7 @@
 	@section Revise_Log
 
 	13/11/20	Add the close thread function in.	\n
+	13/12/22	Modify the close thread function and add comment.	\n
 
 ****************************************************************************/
 
@@ -65,8 +66,8 @@ namespace chuThreadNamespace
 	protected:
 
 		/*	The Local Handler and All Global Handelr	*/
-		HANDLE localhotHANDLE;
-		//static vector<HANDLE> threadHANDLE;
+		HANDLE localhostHANDLE;						// save the handler for new thread
+		//static vector<HANDLE> threadHANDLE;		// using for future multi-thread in one class
 	};
 
 }	// chuThreadNamespace
@@ -108,7 +109,7 @@ namespace chuThreadNamespace
 		DWORD dwThreadId;
 		HANDLE createThreadHandel;
 		createThreadHandel = (HANDLE)CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ChuThread<T1, T2>::openThread, (void*)this, 0, &dwThreadId);
-		localhotHANDLE = createThreadHandel;
+		localhostHANDLE = createThreadHandel;
 		//threadHANDLE.push_back(createThreadHandel);
 	}
 
@@ -163,15 +164,15 @@ namespace chuThreadNamespace
 	}
 
 	/**
-	* Function Name:	startThread
-	* Function Purpose:	Create an other thread to execute openThread function by WIN_API
+	* Function Name:	stopThread
+	* Function Purpose:	Stop the created thread using the WIN_API and handler
 	*/
 	template<class  T1, class T2>
 	bool ChuThread<T1, T2>::stopThread()	//argTempl1
 	{
 		bool retVal;
-		if(TerminateThread(localhotHANDLE, 0))
-			if(CloseHandle(localhotHANDLE))
+		if(TerminateThread(localhostHANDLE, 0))
+			if(CloseHandle(localhostHANDLE))
 				retVal = true;
 			else
 				retVal = false;

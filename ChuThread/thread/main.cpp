@@ -27,9 +27,9 @@ void MyThread::thread()
 	{
 		count++;
 		s.intData = count;
-		setShareVariable(s);
-		cout << "thread:" << s.intData << endl;
-		Sleep(1000);
+		setLocalVariable(s);
+		//cout << "threadddddddddddddddddddd:" << s.intData << endl;
+		Sleep(100);
 	}
 }
 
@@ -64,12 +64,12 @@ int main()
 
 	t1.startThread();
 
-	for(int i(0); i<10; i++)
+	for(int i(0); i<10000; i++)
 	{
 		//t1.setInterruptFlag();
-		s = t1.getShareVariable();
-		cout << "main:" << s.intData << endl;
-		Sleep(500);
+		s = t1.getLocalVariable();
+		//cout << "mainnnnnnnnnnnnnnnnn:" << s.intData << endl;
+		Sleep(100);
 	}
 
 	t1.stopThread();

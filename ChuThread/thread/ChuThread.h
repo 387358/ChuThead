@@ -3,7 +3,7 @@
 
 	@file		ChuThread.h
 	@authors	Ting-Sheng Chu
-	@version	1.0
+	@version	1.13
 	@date		2013-11
 	@copyright	GNU Public License.
 	
@@ -17,7 +17,9 @@
 
 	13/11/20	Add the close thread function in.	\n
 	13/12/22	Modify the close thread function and add comment.	\n
-	14/03/14	Add one more getSetMutex for protecting sharedVariables	\n
+	14/03/14	Add one more mutexOfShareVariable for protecting sharedVariables	\n
+	14/03/15	Add one more mutexOfLocalVariable for protecting localVariables	\n
+	14/03/14	Rename ghMutex as mutexOfCreatedThread for created thread mutex	\n
 
 ****************************************************************************/
 
@@ -39,27 +41,28 @@ namespace chuThreadNamespace
 
 	public:
 		ChuThread();		
-		void startThread();										/// Create a new thread to run the thread funciton
-		virtual void thread();									/// This function need to be override by inherit class
+		void startThread();								/// Create a new thread to run the thread funciton
+		virtual void thread();							/// This function need to be override by inherit class
 
-		void setLocalVariable(T1 arg){localVariable = arg;};	/// Set local variable in template T1
-		const T1 getLocalVariable(){return localVariable;}		/// Get local variable in template T1
+		void setLocalVariable(T1 arg);					/// Set local variable in template T1
+		const T1 getLocalVariable();					/// Get local variable in template T1
 		
-		void setShareVariable(T2 arg);							/// Set global variable in template T2
-		const T2 getShareVariable();							/// Get local variable in template T2
+		void setShareVariable(T2 arg);					/// Set global variable in template T2
+		const T2 getShareVariable();					/// Get local variable in template T2
 
-		void setInterruptFlag(){interruptFlag = 1;};			/// Let thread can be interrup by other threads
+		void setInterruptFlag(){interruptFlag = 1;};	/// Let created thread can be interrup by other created threads
 
-		bool stopThread();										/// Stop and close the new thread running the thread funciton
+		bool stopThread();								/// Stop and close the created thread running the thread funciton
 
 	private:
 
 		static void openThread(void* o);
 
 		/*	Thread Synchronize Control */
-		static HANDLE ghMutex;						// the mutex for excuting each thread 
-		static HANDLE getSetMutex;					// the mutex for get and set shared variable
-		static int interruptFlag;					// 
+		static HANDLE mutexOfCreatedThread;			// the mutex for excuting each created thread 
+		static HANDLE mutexOfShareVariable;			// the mutex for get and set shared variable
+		static HANDLE mutexOfLocalVariable;			// the mutex for get and set local variable
+		static int interruptFlag;					// the flag of is interrupt or not
 
 		/*	Shared Variable & Static Variable	*/
 		static T2 shareVariable;					// share variable in template T1
@@ -81,10 +84,13 @@ namespace chuThreadNamespace
 	using namespace std;
 
 	template<class  T1, class T2>
-	HANDLE ChuThread<T1, T2>::ghMutex = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
+	HANDLE ChuThread<T1, T2>::mutexOfCreatedThread = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
 
 	template<class  T1, class T2>
-	HANDLE ChuThread<T1, T2>::getSetMutex = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
+	HANDLE ChuThread<T1, T2>::mutexOfShareVariable = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
+
+	template<class  T1, class T2>
+	HANDLE ChuThread<T1, T2>::mutexOfLocalVariable = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
 	
 	template<class  T1, class T2>
 	int ChuThread<T1, T2>::interruptFlag = 0;	// initialize interruput flag
@@ -125,9 +131,9 @@ namespace chuThreadNamespace
 	template<class  T1, class T2>
 	void ChuThread<T1, T2>::setShareVariable(T2 arg)
 	{
-		WaitForSingleObject(getSetMutex, INFINITE);
+		WaitForSingleObject(mutexOfShareVariable, INFINITE);
 		shareVariable = arg;
-		ReleaseMutex(getSetMutex);
+		ReleaseMutex(mutexOfShareVariable);
 	}
 
 	/**
@@ -137,12 +143,39 @@ namespace chuThreadNamespace
 	template<class  T1, class T2>
 	const T2 ChuThread<T1, T2>::getShareVariable()
 	{
-		WaitForSingleObject(getSetMutex, INFINITE);
+		WaitForSingleObject(mutexOfShareVariable, INFINITE);
 		T2 tempShareVariable;
 		tempShareVariable = shareVariable;
-		ReleaseMutex(getSetMutex);
+		ReleaseMutex(mutexOfShareVariable);
 
 		return tempShareVariable;
+	}
+	
+	/**
+	* Function Name:	setLocalVariable
+	* Function Purpose:	Set the local variabel to a class variable for all thread access
+	*/
+	template<class  T1, class T2>
+	void ChuThread<T1, T2>::setLocalVariable(T1 arg)
+	{
+		WaitForSingleObject(mutexOfLocalVariable, INFINITE);
+		localVariable = arg;
+		ReleaseMutex(mutexOfLocalVariable);
+	}
+
+	/**
+	* Function Name:	getLocalVariable
+	* Function Purpose:	Get the local variabel and return
+	*/
+	template<class  T1, class T2>
+	const T1 ChuThread<T1, T2>::getLocalVariable()
+	{
+		WaitForSingleObject(mutexOfLocalVariable, INFINITE);
+		T1 tempLocalVariable;
+		tempLocalVariable = localVariable;
+		ReleaseMutex(mutexOfLocalVariable);
+
+		return tempLocalVariable;
 	}
 
 	/**
@@ -155,11 +188,11 @@ namespace chuThreadNamespace
 		ChuThread<T1, T2> *callingObject = static_cast<ChuThread<T1, T2>*>(ptrOfCallingObject);
 
 		/*	Check Can Interrupt Or Not	*/
-		if(interruptFlag==0){WaitForSingleObject(ghMutex, INFINITE);}
+		if(interruptFlag==0){WaitForSingleObject(mutexOfCreatedThread, INFINITE);}
 
 		callingObject->thread();
 
-		if(interruptFlag==0){ReleaseMutex(ghMutex);}	// check interrupt
+		if(interruptFlag==0){ReleaseMutex(mutexOfCreatedThread);}	// check interrupt
 
 		_endthread();
 	}
@@ -196,8 +229,6 @@ namespace chuThreadNamespace
 		return retVal;
 	}
 }
-
-
 
 
 #endif //CHUTHREAD_H

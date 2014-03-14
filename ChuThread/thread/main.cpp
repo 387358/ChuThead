@@ -29,7 +29,7 @@ void MyThread::thread()
 		s.intData = count;
 		setShareVariable(s);
 		cout << "thread:" << s.intData << endl;
-		//Sleep(10);
+		Sleep(1000);
 	}
 }
 
@@ -64,14 +64,13 @@ int main()
 
 	t1.startThread();
 
-	while(1)
+	for(int i(0); i<10; i++)
 	{
 		//t1.setInterruptFlag();
 		s = t1.getShareVariable();
 		cout << "main:" << s.intData << endl;
-		//Sleep(10);
+		Sleep(500);
 	}
-
 
 	t1.stopThread();
 

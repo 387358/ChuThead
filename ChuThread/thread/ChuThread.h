@@ -17,6 +17,7 @@
 
 	13/11/20	Add the close thread function in.	\n
 	13/12/22	Modify the close thread function and add comment.	\n
+	14/03/14	Add one more getSetMutex for protecting sharedVariables	\n
 
 ****************************************************************************/
 
@@ -39,7 +40,7 @@ namespace chuThreadNamespace
 	public:
 		ChuThread();		
 		void startThread();										/// Create a new thread to run the thread funciton
-		virtual void thread();									/// This function need to be override by inheriting class
+		virtual void thread();									/// This function need to be override by inherit class
 
 		void setLocalVariable(T1 arg){localVariable = arg;};	/// Set local variable in template T1
 		const T1 getLocalVariable(){return localVariable;}		/// Get local variable in template T1
@@ -56,12 +57,13 @@ namespace chuThreadNamespace
 		static void openThread(void* o);
 
 		/*	Thread Synchronize Control */
-		static HANDLE ghMutex;
-		static int interruptFlag;
+		static HANDLE ghMutex;						// the mutex for excuting each thread 
+		static HANDLE getSetMutex;					// the mutex for get and set shared variable
+		static int interruptFlag;					// 
 
 		/*	Shared Variable & Static Variable	*/
-		static T2 shareVariable;					//share variable in template T1
-		T1 localVariable;							//local variable in template T2
+		static T2 shareVariable;					// share variable in template T1
+		T1 localVariable;							// local variable in template T2
 		
 	protected:
 
@@ -80,6 +82,9 @@ namespace chuThreadNamespace
 
 	template<class  T1, class T2>
 	HANDLE ChuThread<T1, T2>::ghMutex = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
+
+	template<class  T1, class T2>
+	HANDLE ChuThread<T1, T2>::getSetMutex = CreateMutex( NULL, FALSE, NULL);	// initialize mutex
 	
 	template<class  T1, class T2>
 	int ChuThread<T1, T2>::interruptFlag = 0;	// initialize interruput flag
@@ -120,7 +125,9 @@ namespace chuThreadNamespace
 	template<class  T1, class T2>
 	void ChuThread<T1, T2>::setShareVariable(T2 arg)
 	{
+		WaitForSingleObject(getSetMutex, INFINITE);
 		shareVariable = arg;
+		ReleaseMutex(getSetMutex);
 	}
 
 	/**
@@ -130,7 +137,12 @@ namespace chuThreadNamespace
 	template<class  T1, class T2>
 	const T2 ChuThread<T1, T2>::getShareVariable()
 	{
-		return shareVariable;
+		WaitForSingleObject(getSetMutex, INFINITE);
+		T2 tempShareVariable;
+		tempShareVariable = shareVariable;
+		ReleaseMutex(getSetMutex);
+
+		return tempShareVariable;
 	}
 
 	/**

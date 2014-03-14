@@ -16,18 +16,20 @@ using namespace chuThreadNamespace;
 class MyThread : public ChuThread<Sturct, Sturct>
 {
 	virtual void thread();
+	int count;
 };
 
 void MyThread::thread()
 {
+	Sturct s;
+	count  = 0;
 	while(1)
 	{
-		//cout << "the int LocalVariable: " << getLocalVariable().intData << endl;
-		//cout << "the double LocalVariable: " << getLocalVariable().doubleData << endl;
-		cout << "the int ShareVariable: " << getShareVariable().intData << endl;
-		//cout << "the double ShareVariable: " << getShareVariable().doubleData << endl;
-		cout << endl;
-		Sleep(1000);
+		count++;
+		s.intData = count;
+		setShareVariable(s);
+		cout << "thread:" << s.intData << endl;
+		//Sleep(10);
 	}
 }
 
@@ -61,13 +63,15 @@ int main()
 */
 
 	t1.startThread();
-	for(int k(0); k<5; k++)
+
+	while(1)
 	{
-		i++;
-		s.intData = i;
-		t1.setShareVariable(s);
-		Sleep(1000);
+		//t1.setInterruptFlag();
+		s = t1.getShareVariable();
+		cout << "main:" << s.intData << endl;
+		//Sleep(10);
 	}
+
 
 	t1.stopThread();
 
